@@ -28,7 +28,13 @@ try {
         if ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
             $runId = $env:GITHUB_RUN_ID
             $attemptNumber = $env:GITHUB_RUN_NUMBER
-            $pullRequestNumber = "135" # $env:GITHUB_EVENT_PATH | Get-Content | ConvertFrom-Json | Select-Object -ExpandProperty number
+            $pullRequestNumber = "135"
+            try {
+                $env:GITHUB_EVENT_PATH | Get-Content | Write-Host
+                $env | Get-Content | Write-Host
+            } catch {
+                Write-Host "Error: $_"
+            }
 
             Write-Host "RunId: $runId"
             Write-Host "AttemptNumber: $attemptNumber"
@@ -45,12 +51,12 @@ try {
             if ($existingComment) {
                 Write-Host "Updating existing comment: $($existingComment.id)"
                 # Update the existing comment
-                $pullRequestComment = ($existingComment.body + $testResultSummary) -replace "\\n", "`n"
+                $pullRequestComment = ($existingComment.body + "`n" + $testResultSummary) -replace "\\n", "`n"
                 gh api --method PATCH -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/$ENV:GITHUB_REPOSITORY/issues/comments/$($existingComment.id) -f body=$pullRequestComment
             }
             else {
                 # Create a new comment
-                $title = "### Test results`n"
+                $title = "# Test results`n"
                 $pullRequestComment = ($pullRequestCommentAffix + $title + $testResultSummary) -replace "\\n", "`n"
                 Write-Host "PullRequestComment: $pullRequestComment"
                 gh api --method POST -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/$ENV:GITHUB_REPOSITORY/issues/$pullRequestNumber/comments -f body=$pullRequestComment 
