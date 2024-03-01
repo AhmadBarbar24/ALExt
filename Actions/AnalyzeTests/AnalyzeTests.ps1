@@ -24,8 +24,35 @@ try {
         Add-Content -Encoding UTF8 -Path $env:GITHUB_OUTPUT -Value "TestResultMD=$testResultSummary"
         Write-Host "TestResultMD=$testResultSummary"
 
-        gh api --method POST -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/$ENV:GITHUB_REPOSITORY/issues/135/comments -f body=$testResultSummary 
+        # If event is pull_request
+        if ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
+            $runId = $env:GITHUB_RUN_ID
+            $attemptNumber = $env:GITHUB_RUN_NUMBER
+            $pullRequestNumber = $env:GITHUB_EVENT_PATH | Get-Content | ConvertFrom-Json | Select-Object -ExpandProperty number
 
+            Write-Host "RunId: $runId"
+            Write-Host "AttemptNumber: $attemptNumber"
+            Write-Host "PullRequestNumber: $pullRequestNumber"
+
+            $pullRequestCommentAffix = "<!--$runId / $attemptNumber-->"
+
+            Write-Host "PullRequestCommentAffix: $pullRequestCommentAffix"
+
+            # Check if a comment with the affix already exists using gh api
+            $existingComment = gh api --method GET -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/$ENV:GITHUB_REPOSITORY/issues/$pullRequestNumber/comments | ConvertFrom-Json | Where-Object { $_.body -like "$pullRequestCommentAffix*" }
+            if ($existingComment) {
+                Write-Host "Updating existing comment: $($existingComment.id)"
+                # Update the existing comment
+                $pullRequestComment = ($existingComment.body + $testResultSummary) -replace "\n", "`n"
+                gh api --method PATCH -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/$ENV:GITHUB_REPOSITORY/issues/comments/$($existingComment.id) -f body=$pullRequestComment
+            }
+            else {
+                # Create a new comment
+                $pullRequestComment = ($pullRequestCommentAffix + $testResultSummary) -replace "\n", "`n"
+                Write-Host "PullRequestComment: $pullRequestComment"
+                gh api --method POST -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/$ENV:GITHUB_REPOSITORY/issues/$pullRequestNumber/comments -f body=$pullRequestComment 
+            }
+        }
         Add-Content -path $ENV:GITHUB_STEP_SUMMARY -value "$($testResultSummary.Replace("\n","`n"))`n"
     }
     else {
