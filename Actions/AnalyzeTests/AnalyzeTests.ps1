@@ -28,7 +28,7 @@ try {
         if ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
             $runId = $env:GITHUB_RUN_ID
             $attemptNumber = $env:GITHUB_RUN_NUMBER
-            $pullRequestNumber = $env:GITHUB_EVENT_PATH | Get-Content | ConvertFrom-Json | Select-Object -ExpandProperty number
+            $pullRequestNumber = "147" # $env:GITHUB_EVENT_PATH | Get-Content | ConvertFrom-Json | Select-Object -ExpandProperty number
 
             Write-Host "RunId: $runId"
             Write-Host "AttemptNumber: $attemptNumber"
