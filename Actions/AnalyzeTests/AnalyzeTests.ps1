@@ -53,7 +53,7 @@ try {
                 gh api --method POST -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/$ENV:GITHUB_REPOSITORY/issues/$pullRequestNumber/comments -f body=$pullRequestComment 
             }#>
             # Create a new comment
-            $pullRequestComment = ($pullRequestCommentAffix + $testResultSummary) -replace "\n", "`n"
+            $pullRequestComment = ($pullRequestCommentAffix + $testResultSummary) -replace "\\n", "`n"
             Write-Host "PullRequestComment: $pullRequestComment"
             gh api --method POST -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/$ENV:GITHUB_REPOSITORY/issues/$pullRequestNumber/comments -f body=$pullRequestComment 
         }
