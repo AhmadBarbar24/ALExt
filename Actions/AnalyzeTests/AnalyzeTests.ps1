@@ -34,7 +34,7 @@ try {
             Write-Host "AttemptNumber: $attemptNumber"
             Write-Host "PullRequestNumber: $pullRequestNumber"
 
-            $pullRequestCommentAffix = "<!--$runId / $attemptNumber-->"
+            $pullRequestCommentAffix = "<!--$runId / $attemptNumber-->`n"
 
             Write-Host "PullRequestCommentAffix: $pullRequestCommentAffix"
 
