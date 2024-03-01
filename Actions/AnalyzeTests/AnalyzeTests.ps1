@@ -51,7 +51,7 @@ try {
             if ($existingComment) {
                 Write-Host "Updating existing comment: $($existingComment.id)"
                 # Update the existing comment
-                $pullRequestComment = ($existingComment.body + "`n" + $testResultSummary) -replace "\\n", "`n"
+                $pullRequestComment = ($existingComment.body + "`n`n`n" + $testResultSummary) -replace "\\n", "`n"
                 gh api --method PATCH -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/$ENV:GITHUB_REPOSITORY/issues/comments/$($existingComment.id) -f body=$pullRequestComment
             }
             else {
