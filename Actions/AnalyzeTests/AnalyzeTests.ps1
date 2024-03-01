@@ -24,6 +24,9 @@ try {
         Add-Content -Encoding UTF8 -Path $env:GITHUB_OUTPUT -Value "TestResultMD=$testResultSummary"
         Write-Host "TestResultMD=$testResultSummary"
 
+        gh api --method POST -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" \
+        /repos/$ENV:GITHUB_REPOSITORY/issues/135/comments -f body=$testResultSummary 
+
         Add-Content -path $ENV:GITHUB_STEP_SUMMARY -value "$($testResultSummary.Replace("\n","`n"))`n"
     }
     else {
