@@ -27,7 +27,7 @@ try {
         # If event is pull_request
         if ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
             $runId = $env:GITHUB_RUN_ID
-            $attemptNumber = $env:GITHUB_RUN_NUMBER
+            $attemptNumber = $env:GITHUB_RUN_ATTEMPT
             $pullRequestNumber = "135"
             try {
                 $env:GITHUB_EVENT_PATH | Get-Content | Write-Host
@@ -36,11 +36,20 @@ try {
                 Write-Host "Error: $_"
             }
 
+            $job = gh api --method GET -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/$ENV:GITHUB_REPOSITORY/actions/jobs/$env:GITHUB_JOB
+            $jobName = "Unknown job name"
+            if ($job) {
+                $jobName = $job | ConvertFrom-Json | Select-Object -ExpandProperty name
+            }
+            else {
+                Write-Host "Job not found: $env:GITHUB_JOB"
+            }
+
             Write-Host "RunId: $runId"
             Write-Host "AttemptNumber: $attemptNumber"
             Write-Host "PullRequestNumber: $pullRequestNumber"
 
-            $pullRequestCommentAffix = "<!--$runId -->`n"
+            $pullRequestCommentAffix = "<!--$runId / $attemptNumber-->`n"
 
             Write-Host "PullRequestCommentAffix: $pullRequestCommentAffix"
 
@@ -50,14 +59,16 @@ try {
 
             if ($existingComment) {
                 Write-Host "Updating existing comment: $($existingComment.id)"
+                $subtitle = "### $jobName`n"
                 # Update the existing comment
-                $pullRequestComment = ($existingComment.body + "`n`n`n" + $testResultSummary) -replace "\\n", "`n"
+                $pullRequestComment = ($existingComment.body + "`n`n`n" + $subtitle + $testResultSummary) -replace "\\n", "`n"
                 gh api --method PATCH -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/$ENV:GITHUB_REPOSITORY/issues/comments/$($existingComment.id) -f body=$pullRequestComment
             }
             else {
                 # Create a new comment
                 $title = "# Test results`n"
-                $pullRequestComment = ($pullRequestCommentAffix + $title + $testResultSummary) -replace "\\n", "`n"
+                $subtitle = "### $jobName`n"
+                $pullRequestComment = ($pullRequestCommentAffix + $title + $subtitle + $testResultSummary) -replace "\\n", "`n"
                 Write-Host "PullRequestComment: $pullRequestComment"
                 gh api --method POST -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/$ENV:GITHUB_REPOSITORY/issues/$pullRequestNumber/comments -f body=$pullRequestComment 
             }
