@@ -34,13 +34,15 @@ try {
             Write-Host "AttemptNumber: $attemptNumber"
             Write-Host "PullRequestNumber: $pullRequestNumber"
 
-            $pullRequestCommentAffix = "<!--$runId / $attemptNumber-->`n"
+            $pullRequestCommentAffix = "<!--$runId -->`n"
 
             Write-Host "PullRequestCommentAffix: $pullRequestCommentAffix"
 
             # Check if a comment with the affix already exists using gh api
-            #$existingComment = gh api --method GET -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/$ENV:GITHUB_REPOSITORY/issues/$pullRequestNumber/comments | ConvertFrom-Json | Where-Object { $_.body -like "$pullRequestCommentAffix*" }
-            <#if ($existingComment) {
+            $existingComments = gh api --method GET -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/$ENV:GITHUB_REPOSITORY/issues/$pullRequestNumber/comments | ConvertFrom-Json
+            $existingComment = $existingComments | Where-Object { ($_.PSObject.Properties.Name -contains "body_text") -and ($_.body_text -like "$pullRequestCommentAffix*")} | Select-Object -First 1
+
+            if ($existingComment) {
                 Write-Host "Updating existing comment: $($existingComment.id)"
                 # Update the existing comment
                 $pullRequestComment = ($existingComment.body + $testResultSummary) -replace "\n", "`n"
@@ -51,11 +53,11 @@ try {
                 $pullRequestComment = ($pullRequestCommentAffix + $testResultSummary) -replace "\n", "`n"
                 Write-Host "PullRequestComment: $pullRequestComment"
                 gh api --method POST -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/$ENV:GITHUB_REPOSITORY/issues/$pullRequestNumber/comments -f body=$pullRequestComment 
-            }#>
+            }
             # Create a new comment
-            $pullRequestComment = ($pullRequestCommentAffix + $testResultSummary) -replace "\\n", "`n"
-            Write-Host "PullRequestComment: $pullRequestComment"
-            gh api --method POST -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/$ENV:GITHUB_REPOSITORY/issues/$pullRequestNumber/comments -f body=$pullRequestComment 
+            # $pullRequestComment = ($pullRequestCommentAffix + $testResultSummary) -replace "\\n", "`n"
+            # Write-Host "PullRequestComment: $pullRequestComment"
+            # gh api --method POST -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/$ENV:GITHUB_REPOSITORY/issues/$pullRequestNumber/comments -f body=$pullRequestComment 
         }
         Add-Content -path $ENV:GITHUB_STEP_SUMMARY -value "$($testResultSummary.Replace("\n","`n"))`n"
     }
