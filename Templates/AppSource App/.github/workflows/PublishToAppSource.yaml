@@ -49,7 +49,6 @@ jobs:
         uses: microsoft/AL-Go-Actions/WorkflowInitialize@main
         with:
           shell: powershell
-          eventId: "DO0103"
 
   Deliver:
     needs: [ Initialization ]
@@ -78,7 +77,6 @@ jobs:
           Secrets: '${{ steps.ReadSecrets.outputs.Secrets }}'
         with:
           shell: powershell
-          parentTelemetryScopeJson: ${{ needs.Initialization.outputs.telemetryScopeJson }}
           type: 'Release'
           projects: ${{ github.event.inputs.projects }}
           deliveryTarget: 'AppSource'
@@ -96,7 +94,9 @@ jobs:
       - name: Finalize the workflow
         id: PostProcess
         uses: microsoft/AL-Go-Actions/WorkflowPostProcess@main
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           shell: powershell
-          eventId: "DO0103"
           telemetryScopeJson: ${{ needs.Initialization.outputs.telemetryScopeJson }}
+          currentJobContext: ${{ toJson(job) }}
