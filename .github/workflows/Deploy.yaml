@@ -174,7 +174,7 @@ jobs:
 
       - name: Create release
         if: github.repository_owner == 'microsoft' && needs.Inputs.outputs.createRelease == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         id: createrelease
         env:
           branch: ${{ needs.Inputs.outputs.branch }}
